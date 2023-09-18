@@ -6,11 +6,13 @@ import sys
 
 class LinearRegression:
 
-    def __init__(self, base_functions: list = cfg.base_functions, learning_rate: float = 0.01):
+    def __init__(self, base_functions: list = cfg.base_functions, learning_rate: float = 0.01,
+                 train_type: TrainType = cfg.train_type):
         # init weights using np.random.randn (normal distribution with mean=0 and variance=1).
-        self.weights = np.random.randn(len(base_functions))
+        self.weights = np.random.randn(len(base_functions) + 1)
         self.base_functions = base_functions
         self.learning_rate = learning_rate
+        self.train_type = train_type
 
     # Methods related to the Normal Equation
     def _pseudoinverse_matrix(self, plan_matrix: np.ndarray) -> np.ndarray:
@@ -40,7 +42,7 @@ class LinearRegression:
 
         TODO: Implement this method. You can use np.linalg.svd
         """
-        V, SIGMA, U = np.linalg.svd(plan_matrix, full_matrices=False)
+        U, SIGMA, V = np.linalg.svd(plan_matrix, full_matrices=False)
         eps = sys.float_info.epsilon
         N = plan_matrix.shape[0]
         M = len(self.base_functions)
@@ -88,12 +90,19 @@ class LinearRegression:
             TODO: Implement this method using one loop over the base functions.
 
         """
+
         res = np.ones_like(inputs)
-        for func in self.base_functions:
-            res = np.append(res, func(inputs), axis=1)
+        if inputs.ndim == 1:
+            for func in self.base_functions:
+                arr = func(inputs)
+                res = np.column_stack((res, arr))
+        else:
+            for func in self.base_functions:
+                arr = func(inputs)
+                res = np.append(res, arr, axis=1)
         return res
 
-    def calculate_model_prediction(self, plan_matrix: np.ndarray) -> np.ndarray:
+    def calculate_model_prediction(self, inputs: np.ndarray) -> np.ndarray:
         """Calculate the predictions of the model.
 
             The prediction (y_pred) can be computed using the formula:
@@ -112,6 +121,7 @@ class LinearRegression:
         TODO: Implement this method without using loop
 
         """
+        plan_matrix = self._plan_matrix(inputs)
         return plan_matrix @ self.weights.T
 
     # Methods related to Gradient Descent
@@ -132,7 +142,7 @@ class LinearRegression:
 
             TODO: Implement this method using matrix operations in numpy. a.T - transpose. Do not use loops
             """
-        pass
+        return (2/plan_matrix.shape[0]) * plan_matrix.T @ (plan_matrix @ self.weights - targets)
 
     def calculate_cost_function(self, plan_matrix, targets):
         """Calculate the cost function value for the current weights.
@@ -149,14 +159,14 @@ class LinearRegression:
 
         TODO: Implement this method using numpy operations to compute the mean squared error. Do not use loops
         """
-        pass
+        return np.mean((targets - plan_matrix @ self.weights.T)**2)
 
     def train(self, inputs: np.ndarray, targets: np.ndarray) -> None:
         """Train the model using either the normal equation or gradient descent based on the configuration.
         TODO: Complete the training process.
         """
         plan_matrix = self._plan_matrix(inputs)
-        if cfg.train_type.value == TrainType.normal_equation.value:
+        if self.train_type.value == TrainType.normal_equation.value:
             pseudoinverse_plan_matrix = self._pseudoinverse_matrix(plan_matrix)
             # train process
             self._calculate_weights(pseudoinverse_plan_matrix, targets)
@@ -173,17 +183,19 @@ class LinearRegression:
 
             This iterative process aims to find the weights that minimize the cost function E(w).
         """
-            for e in cfg.epoch:
+            for e in range(1, cfg.epoch + 1):
                 gradient = self._calculate_gradient(plan_matrix, targets)
                 # update weights w_{k+1} = w_k - γ * ∇_w E(w_k)
+                self.weights -= self.learning_rate * gradient
 
                 if e % 10 == 0:
                     # TODO: Print the cost function's value.
-                    pass
+                    print(f"err_{e}: ", self.calculate_cost_function(plan_matrix, targets))
+
 
     def __call__(self, inputs: np.ndarray) -> np.ndarray:
         """return prediction of the model"""
-        plan_matrix = self._plan_matrix(inputs)
-        predictions = self.calculate_model_prediction(plan_matrix)
+        #plan_matrix = self._plan_matrix(inputs)
+        predictions = self.calculate_model_prediction(inputs)
 
         return predictions
