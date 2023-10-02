@@ -51,7 +51,8 @@ class LinearRegression:
         SIGMA[~condition] = 0
         SIGMA[condition] = 1 / SIGMA[condition]
         SIGMA = np.diag(SIGMA)
-        return V @ (SIGMA @ U.T)
+        return (V.T @ SIGMA) @ U.T
+
 
     def _calculate_weights(self, pseudoinverse_plan_matrix: np.ndarray, targets: np.ndarray) -> None:
         """Calculate the optimal weights using the normal equation.
@@ -68,7 +69,7 @@ class LinearRegression:
 
             TODO: Implement this method. Calculate  Φ^+ using _pseudoinverse_matrix function
         """
-        return pseudoinverse_plan_matrix @ targets
+        self.weights = pseudoinverse_plan_matrix @ targets
 
     # General methods
     def _plan_matrix(self, inputs: np.ndarray) -> np.ndarray:
@@ -90,7 +91,6 @@ class LinearRegression:
             TODO: Implement this method using one loop over the base functions.
 
         """
-
         res = np.ones_like(inputs)
         if inputs.ndim == 1:
             for func in self.base_functions:
@@ -142,7 +142,7 @@ class LinearRegression:
 
             TODO: Implement this method using matrix operations in numpy. a.T - transpose. Do not use loops
             """
-        return (2/plan_matrix.shape[0]) * plan_matrix.T @ (plan_matrix @ self.weights - targets)
+        return (2 / plan_matrix.shape[0]) * plan_matrix.T @ (plan_matrix @ self.weights - targets)
 
     def calculate_cost_function(self, plan_matrix, targets):
         """Calculate the cost function value for the current weights.
@@ -159,7 +159,7 @@ class LinearRegression:
 
         TODO: Implement this method using numpy operations to compute the mean squared error. Do not use loops
         """
-        return np.mean((targets - plan_matrix @ self.weights.T)**2)
+        return np.mean((targets - plan_matrix @ self.weights.T) ** 2)
 
     def train(self, inputs: np.ndarray, targets: np.ndarray) -> None:
         """Train the model using either the normal equation or gradient descent based on the configuration.
@@ -186,16 +186,15 @@ class LinearRegression:
             for e in range(1, cfg.epoch + 1):
                 gradient = self._calculate_gradient(plan_matrix, targets)
                 # update weights w_{k+1} = w_k - γ * ∇_w E(w_k)
-                self.weights -= self.learning_rate * gradient
+                self.weights = self.weights - self.learning_rate * gradient
 
                 if e % 10 == 0:
                     # TODO: Print the cost function's value.
                     print(f"err_{e}: ", self.calculate_cost_function(plan_matrix, targets))
 
-
     def __call__(self, inputs: np.ndarray) -> np.ndarray:
         """return prediction of the model"""
-        #plan_matrix = self._plan_matrix(inputs)
-        predictions = self.calculate_model_prediction(inputs)
+        # plan_matrix = self._plan_matrix(inputs)
 
+        predictions = self.calculate_model_prediction(inputs)
         return predictions

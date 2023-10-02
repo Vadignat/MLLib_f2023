@@ -18,25 +18,19 @@ class Visualisation():
               The function should generate a plot comparing model predictions from gradient descent and normal equation methods against actual data.
 
 
-        Example:
-            To create a simple line chart with additional traces and a title using plotly:
 
-            >>> import numpy as np
-            >>> x = np.arange(10)
-            >>> y1 = np.sin(x)
-            >>> y2 = np.cos(x)
-
-            # Create an initial plot with the sine curve
-            >>> fig = go.Figure(data=go.Scatter(x=x, y=y1, mode='lines', name='sin(x)'))
-
-            # Add a trace for the cosine curve
-            >>> fig.add_trace(go.Scatter(x=x, y=y2, mode='lines', name='cos(x)'))
-
-            # Add a title to the figure
-            >>> fig.update_layout(title='Sine and Cosine Curves')
-
-            # Display the figure
-            >>> fig.show()
         """
 
-    pass
+    @staticmethod
+    def compare_model_predictions(x_values, y_values_list, y_actual, title, names=None):
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=x_values, y=y_actual, mode='markers', name='Actual Data'))
+
+        for i, y_pred in enumerate(y_values_list):
+            name = names[i] if names else f'Model {i + 1} Prediction'
+            fig.add_trace(go.Scatter(x=x_values, y=y_pred, mode='lines', name=name))
+
+        fig.update_layout(title=title, xaxis_title='X Values', yaxis_title='Y Values')
+        return fig
+
+
