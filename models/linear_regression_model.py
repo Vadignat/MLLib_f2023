@@ -2,17 +2,20 @@ import numpy as np
 from configs.linear_regression_cfg import cfg
 from utils.enums import TrainType
 import sys
-
+from logs.Logger import Logger
+import cloudpickle
 
 class LinearRegression:
 
     def __init__(self, base_functions: list = cfg.base_functions, learning_rate: float = 0.01,
-                 train_type: TrainType = cfg.train_type):
+                 train_type: TrainType = cfg.train_type, reg_coefficient: float = 0., experiment_name: str = None):
         # init weights using np.random.randn (normal distribution with mean=0 and variance=1).
         self.weights = np.random.randn(len(base_functions) + 1)
         self.base_functions = base_functions
         self.learning_rate = learning_rate
         self.train_type = train_type
+        self.reg_coefficient = reg_coefficient
+        self.neptune_logger = Logger(cfg.env_path, cfg.project_name, experiment_name)
 
     # Methods related to the Normal Equation
     def _pseudoinverse_matrix(self, plan_matrix: np.ndarray) -> np.ndarray:
@@ -41,6 +44,13 @@ class LinearRegression:
         - M is the number of base functions (without φ_0(x_i)=1).
 
         TODO: Implement this method. You can use np.linalg.svd
+
+        For regularisation
+        Σ'_{i,j} =
+        | Σ_{i,j}/(Σ_{i,j}ˆ2 + λ) , if Σ_{i,j} > ε * max(N, M+1) * max(Σ)
+        | 0, otherwise
+        Note that Σ'_[0,0] = 1/Σ_{i,j}
+        TODO: Add regularisation
         """
         U, SIGMA, V = np.linalg.svd(plan_matrix, full_matrices=False)
         eps = sys.float_info.epsilon
@@ -140,7 +150,11 @@ class LinearRegression:
 
             This formula represents the partial derivative of the mean squared error with respect to the weights.
 
+            For regularisation
+            ∆w E = (2/N) * Φ^T * (Φ * w - t)  + λ * w
+
             TODO: Implement this method using matrix operations in numpy. a.T - transpose. Do not use loops
+            TODO: Add regularisation
             """
         return (2 / plan_matrix.shape[0]) * plan_matrix.T @ (plan_matrix @ self.weights - targets)
 
@@ -157,7 +171,13 @@ class LinearRegression:
         - t is the vector of target values.
         - N is the number of data points.
 
+        For regularisation
+        E(w) = (1/N) * ∑(t - Φ * w^T)^2 + λ * w^T * w
+
+
         TODO: Implement this method using numpy operations to compute the mean squared error. Do not use loops
+        TODO: Add regularisation
+
         """
         return np.mean((targets - plan_matrix @ self.weights.T) ** 2)
 
@@ -198,3 +218,12 @@ class LinearRegression:
 
         predictions = self.calculate_model_prediction(inputs)
         return predictions
+
+    def save(self, filepath):
+        with open(filepath, 'wb') as f:
+            cloudpickle.dump(self, f)
+
+    @classmethod
+    def load(cls, filepath):
+        with open(filepath, 'rb') as f:
+            return cloudpickle.load(f)
