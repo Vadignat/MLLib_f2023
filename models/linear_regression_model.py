@@ -52,16 +52,22 @@ class LinearRegression:
         Note that Σ'_[0,0] = 1/Σ_{i,j}
         TODO: Add regularisation
         """
+
         U, SIGMA, V = np.linalg.svd(plan_matrix, full_matrices=False)
         eps = sys.float_info.epsilon
         N = plan_matrix.shape[0]
         M = len(self.base_functions)
         m = np.max(SIGMA)
         condition = SIGMA > eps * max(N, M) * m
+        sigma0 = SIGMA[0]
         SIGMA[~condition] = 0
-        SIGMA[condition] = 1 / SIGMA[condition]
+        SIGMA[condition] = SIGMA[condition] / (SIGMA[condition] ** 2 + self.reg_coefficient)
+        if SIGMA[0] != 0:
+            SIGMA[0] = 1 / sigma0
         SIGMA = np.diag(SIGMA)
         return (V.T @ SIGMA) @ U.T
+
+
 
 
     def _calculate_weights(self, pseudoinverse_plan_matrix: np.ndarray, targets: np.ndarray) -> None:
@@ -156,7 +162,7 @@ class LinearRegression:
             TODO: Implement this method using matrix operations in numpy. a.T - transpose. Do not use loops
             TODO: Add regularisation
             """
-        return (2 / plan_matrix.shape[0]) * plan_matrix.T @ (plan_matrix @ self.weights - targets)
+        return (2 / plan_matrix.shape[0]) * plan_matrix.T @ (plan_matrix @ self.weights - targets) + self.reg_coefficient * self.weights
 
     def calculate_cost_function(self, plan_matrix, targets):
         """Calculate the cost function value for the current weights.
@@ -179,7 +185,7 @@ class LinearRegression:
         TODO: Add regularisation
 
         """
-        return np.mean((targets - plan_matrix @ self.weights.T) ** 2)
+        return np.mean((targets - plan_matrix @ self.weights.T) ** 2) + self.reg_coefficient * self.weights.T @ self.weights
 
     def train(self, inputs: np.ndarray, targets: np.ndarray) -> None:
         """Train the model using either the normal equation or gradient descent based on the configuration.

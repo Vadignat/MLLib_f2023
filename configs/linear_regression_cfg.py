@@ -6,7 +6,7 @@ from utils.enums import TrainType
 cfg = EasyDict()
 
 # Path to the dataframe
-cfg.dataframe_path = os.path.join('dataframes', 'linear_regression_dataset_with_inputs_as_vectors.csv')
+cfg.dataframe_path = os.path.join('dataframes', 'linear_regression_dataset.csv')
 
 # cfg.base_functions contains callable functions to transform input features.
 # E.g., for polynomial regression: [lambda x: x, lambda x: x**2]
@@ -24,7 +24,7 @@ cfg.train_type = TrainType.gradient_descent
 cfg.epoch = 100
 
 cfg.env_path = os.path.join('.env')  # Путь до файла .env где будет храниться api_token.
-cfg.project_name = ''
+cfg.project_name = 'linear-regression'
 
 
 
