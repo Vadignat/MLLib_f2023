@@ -16,7 +16,7 @@ class Logger():
     def log_hyperparameters(self, params: dict):
         # сохранение гиперпараметов модели
         for param, value in params.items():
-            self.run[f'hyperparameters/{param}'] = value
+            self.run[f'hyperparameters/{param}'].append(value)
 
     def save_param(self, type_set, metric_name: Union[List[str], str], metric_value: Union[List[float], float]):
         if isinstance(metric_name, List):

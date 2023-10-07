@@ -20,10 +20,16 @@ class BaseDataset(ABC):
         # inputs variables
         pass
 
+    def get_inputs_shape(self):
+        return self.inputs.shape
+
+    def get_targets_shape(self):
+        return self.targets.shape
+
     def _divide_into_sets(self):
         # TODO define self.inputs_train, self.targets_train, self.inputs_valid, self.targets_valid,
         #  self.inputs_test, self.targets_test
-        n = len(self.targets)
+        n = self.get_targets_shape()[0]
         indexes = np.arange(n)
         np.random.shuffle(indexes)
         self.inputs_train = self.inputs[indexes[:int(self.train_set_percent * n)]]

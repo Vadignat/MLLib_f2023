@@ -62,10 +62,10 @@ fig2 = vis.compare_model_predictions(x, y_values_list[2:4], y, "Максимал
                                                                f"MSE{errors[2], errors[3]}", names=names)
 fig3 = vis.compare_model_predictions(x, y_values_list[4:], y, "Максимальная степень полинома 100, "
                                                               f"MSE{errors[4], errors[5]}", names=names)
-'''
+
 fig1.show()
 fig2.show()
 fig3.show()
 
-'''
+
 

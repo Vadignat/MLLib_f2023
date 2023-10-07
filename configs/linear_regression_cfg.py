@@ -6,7 +6,7 @@ from utils.enums import TrainType
 cfg = EasyDict()
 
 # Path to the dataframe
-cfg.dataframe_path = os.path.join('dataframes', 'linear_regression_dataset.csv')
+cfg.dataframe_path = os.path.join('dataframes', 'linear_regression_dataset_with_inputs_as_vectors.csv')
 
 # cfg.base_functions contains callable functions to transform input features.
 # E.g., for polynomial regression: [lambda x: x, lambda x: x**2]

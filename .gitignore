@@ -3,3 +3,4 @@ venv/
 .idea/
 .env
 .neptune/
+logging_example.py

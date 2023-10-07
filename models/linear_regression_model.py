@@ -1,9 +1,15 @@
-import numpy as np
-from configs.linear_regression_cfg import cfg
-from utils.enums import TrainType
+import pickle
 import sys
-from logs.Logger import Logger
+
 import cloudpickle
+import numpy as np
+
+
+from configs.linear_regression_cfg import cfg
+from logs.Logger import Logger
+from utils.enums import TrainType
+from utils.metrics import MSE
+
 
 class LinearRegression:
 
@@ -15,6 +21,7 @@ class LinearRegression:
         self.learning_rate = learning_rate
         self.train_type = train_type
         self.reg_coefficient = reg_coefficient
+        self.experiment_name = experiment_name
         self.neptune_logger = Logger(cfg.env_path, cfg.project_name, experiment_name)
 
     # Methods related to the Normal Equation
@@ -107,15 +114,13 @@ class LinearRegression:
             TODO: Implement this method using one loop over the base functions.
 
         """
-        res = np.ones_like(inputs)
-        if inputs.ndim == 1:
-            for func in self.base_functions:
+        res = np.ones(inputs.shape[0])
+        for func in self.base_functions:
+            if inputs.ndim == 1:
                 arr = func(inputs)
-                res = np.column_stack((res, arr))
-        else:
-            for func in self.base_functions:
-                arr = func(inputs)
-                res = np.append(res, arr, axis=1)
+            else:
+                arr = np.apply_along_axis(func, axis=1, arr=inputs)
+            res = np.column_stack((res, arr))
         return res
 
     def calculate_model_prediction(self, inputs: np.ndarray) -> np.ndarray:
@@ -214,9 +219,25 @@ class LinearRegression:
                 # update weights w_{k+1} = w_k - γ * ∇_w E(w_k)
                 self.weights = self.weights - self.learning_rate * gradient
 
+                cost_function_value = self.calculate_cost_function(plan_matrix, targets)
+                preds = self.calculate_model_prediction(inputs)
+                MSE_value = MSE(preds, targets)
+                self.neptune_logger.save_param(
+                    'train',
+                    ['cost_function', 'MSE'],
+                    [cost_function_value, MSE_value]
+                )
+
                 if e % 10 == 0:
+                    pass
                     # TODO: Print the cost function's value.
-                    print(f"err_{e}: ", self.calculate_cost_function(plan_matrix, targets))
+                    # print(f"err_{e}: ", self.calculate_cost_function(plan_matrix, targets))
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Исключаем self.neptune_logger из словаря состояния
+        state['neptune_logger'] = None
+        return state
 
     def __call__(self, inputs: np.ndarray) -> np.ndarray:
         """return prediction of the model"""
@@ -232,4 +253,7 @@ class LinearRegression:
     @classmethod
     def load(cls, filepath):
         with open(filepath, 'rb') as f:
-            return cloudpickle.load(f)
+            model = cloudpickle.load(f)
+            model.neptune_logger = neptune_logger = Logger(cfg.env_path, cfg.project_name, model.experiment_name)
+            return model
+
