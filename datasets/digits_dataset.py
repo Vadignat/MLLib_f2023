@@ -3,7 +3,7 @@ from easydict import EasyDict
 from sklearn.datasets import load_digits
 
 from datasets.base_dataset_classes import BaseClassificationDataset
-from utils.enums import DataProcessTypes, SetType
+from utils.enums import SetType
 
 
 class Digits(BaseClassificationDataset):
@@ -24,7 +24,7 @@ class Digits(BaseClassificationDataset):
 
         # preprocessing
         self.get_data_stats()
-        getattr(self,cfg.data_preprocess_type.name)()
+        getattr(self, cfg.data_preprocess_type.name)()
 
     @property
     def inputs(self):
@@ -63,3 +63,4 @@ class Digits(BaseClassificationDataset):
         return {'inputs': inputs,
                 'targets': targets,
                 'onehotencoding': self.onehotencoding(targets, self.k)}
+
