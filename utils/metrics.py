@@ -41,7 +41,7 @@ def FalseNegatives(predictions: np.ndarray, targets: np.ndarray):
     return np.sum(fn)
 
 
-def accuracy(predictions: np.ndarray, targets: np.ndarray):
+def accuracy(predictions: np.ndarray, targets: np.ndarray) -> float:
     return np.mean(predictions == targets)
 
 
@@ -64,4 +64,5 @@ def f1_score(predictions: np.ndarray, targets: np.ndarray):
         return 0.
     return 2 * pr * rc / (pr + rc)
 
-
+def confusion_matrix(*args, **kwargs):
+    pass

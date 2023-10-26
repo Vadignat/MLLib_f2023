@@ -4,7 +4,7 @@ import os
 from typing import Union, List
 
 class Logger():
-    def __init__(self, env_path, project, experiment_name=None):
+    def     __init__(self, env_path, project, experiment_name=None):
 
         load_dotenv(env_path)
         self.run = neptune.init_run(
