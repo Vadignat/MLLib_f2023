@@ -1,5 +1,8 @@
 import plotly.graph_objects as go
 import numpy as np
+import plotly.express as px
+import pandas as pd
+
 
 class Visualisation():
     """
@@ -33,4 +36,29 @@ class Visualisation():
         fig.update_layout(title=title, xaxis_title='X Values', yaxis_title='Y Values')
         return fig
 
+    @staticmethod
+    def plot_precision_recall_curve(thresholds, precision_values, recall_values, accuracy_values, f1_score_values):
+        data = {
+            'Thresholds': thresholds,
+            'Precision': precision_values,
+            'Recall': recall_values,
+            'Accuracy': accuracy_values,
+            'F1 Score': f1_score_values
+        }
+        df = pd.DataFrame(data)
+
+        fig = px.line(df, x='Recall', y='Precision', text='Thresholds', title='Precision-Recall Curve')
+        fig.update_traces(texttemplate='%{text:.3f}', textposition='top right')
+
+        hover_data = [f'Threshold: {threshold:.3f}<br>Accuracy: {accuracy:.2f}<br>F1 Score: {f1_score:.2f}' for
+                      threshold, accuracy, f1_score in zip(thresholds, accuracy_values, f1_score_values)]
+        fig.add_trace(go.Scatter(x=df['Recall'], y=df['Precision'], mode='markers', text=hover_data, name='Metrics'))
+
+        fig.update_layout(
+            xaxis_title='Recall',
+            yaxis_title='Precision',
+            legend_title='Hover Data',
+        )
+
+        return fig
 

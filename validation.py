@@ -12,7 +12,7 @@
 #  log MSE and cost function on validation and trainig sets
 #  9) Log final mse on validation set after trainig
 #  10) Save model if it is showing best mse on validation set
-import pickle
+
 
 import numpy as np
 from logs.Logger import Logger
