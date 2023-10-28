@@ -49,25 +49,36 @@ class BaseDataset(ABC):
         self.inputs_test = self.inputs[indexes[int((self.train_set_percent + self.valid_set_percent) * n):]]
         self.targets_test = self.targets[indexes[int((self.train_set_percent + self.valid_set_percent) * n):]]
 
+    def _normalize(self, arr, x_min, x_max):
+        return (arr - x_min) / (x_max - x_min)
+
     def normalization(self):
         # TODO write normalization method BONUS TASK
-        pass
+        x_min = np.min(self.inputs_train, axis=0)
+        x_max = np.max(self.inputs_train, axis=0)
+        self.inputs_train = self._normalize(self.inputs_train, x_min, x_max)
+        self.inputs_valid = self._normalize(self.inputs_valid, x_min, x_max)
+        self.inputs_test = self._normalize(self.inputs_test, x_min, x_max)
+
+
 
     def get_data_stats(self):
         # TODO calculate mean and std of inputs vectors of training set by each dimension
-        std = np.std(self.inputs_train, axis=0)
-        mean = np.mean(self.inputs_train, axis=0)
-        return mean, std
+        self.std = np.std(self.inputs_train, axis=0)
+        self.mean = np.mean(self.inputs_train, axis=0)
+
+    def _standardize(self, arr, mean, std):
+        return (arr - mean) / std
 
     def standartization(self):
         # TODO write standardization method (use stats from __get_data_stats)
         #   DON'T USE LOOP
-        std, mean = self.get_data_stats()
-
+        self.inputs_train = self._standartize(self.inputs_train, self.mean, self.std)
+        self.inputs_valid = self._standartize(self.inputs_valid, self.mean, self.std)
+        self.inputs_test = self._standartize(self.inputs_test, self.mean, self.std)
 
 
 class BaseClassificationDataset(BaseDataset):
-
     @property
     @abstractmethod
     def k(self):
@@ -78,4 +89,11 @@ class BaseClassificationDataset(BaseDataset):
     def onehotencoding(targets: np.ndarray, number_classes: int) -> np.ndarray:
         # TODO create matrix of onehot encoding vactors for input targets
         # it is possible to do it without loop try make it without loop
-        pass
+        ohe = np.zeros((targets.shape[0], number_classes))
+        ohe[np.arange(targets.shape[0]), targets] = 1
+        return ohe
+
+
+
+
+

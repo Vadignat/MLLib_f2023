@@ -16,3 +16,4 @@ cfg.weights_init_kwargs = {'sigma': 1}
 cfg.gamma = 0.01
 cfg.gd_stopping_criteria = GDStoppingCriteria.epoch
 cfg.nb_epoch = 100
+
