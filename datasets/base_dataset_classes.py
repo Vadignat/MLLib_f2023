@@ -64,18 +64,20 @@ class BaseDataset(ABC):
 
     def get_data_stats(self):
         # TODO calculate mean and std of inputs vectors of training set by each dimension
-        self.std = np.std(self.inputs_train, axis=0)
+        std = np.std(self.inputs_train, axis=0)
+        std[std == 0] = 1e-10
+        self.std = std
         self.mean = np.mean(self.inputs_train, axis=0)
 
     def _standardize(self, arr, mean, std):
         return (arr - mean) / std
 
-    def standartization(self):
+    def standardization(self):
         # TODO write standardization method (use stats from __get_data_stats)
         #   DON'T USE LOOP
-        self.inputs_train = self._standartize(self.inputs_train, self.mean, self.std)
-        self.inputs_valid = self._standartize(self.inputs_valid, self.mean, self.std)
-        self.inputs_test = self._standartize(self.inputs_test, self.mean, self.std)
+        self.inputs_train = self._standardize(self.inputs_train, self.mean, self.std)
+        self.inputs_valid = self._standardize(self.inputs_valid, self.mean, self.std)
+        self.inputs_test = self._standardize(self.inputs_test, self.mean, self.std)
 
 
 class BaseClassificationDataset(BaseDataset):

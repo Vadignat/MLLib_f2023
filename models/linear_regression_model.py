@@ -1,4 +1,3 @@
-import pickle
 import sys
 
 import cloudpickle
@@ -233,11 +232,7 @@ class LinearRegression:
                     # TODO: Print the cost function's value.
                     # print(f"err_{e}: ", self.calculate_cost_function(plan_matrix, targets))
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        # Исключаем self.neptune_logger из словаря состояния
-        state['neptune_logger'] = None
-        return state
+
 
     def __call__(self, inputs: np.ndarray) -> np.ndarray:
         """return prediction of the model"""
@@ -245,6 +240,12 @@ class LinearRegression:
 
         predictions = self.calculate_model_prediction(inputs)
         return predictions
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Исключаем self.neptune_logger из словаря состояния
+        state['neptune_logger'] = None
+        return state
 
     def save(self, filepath):
         with open(filepath, 'wb') as f:
@@ -254,6 +255,6 @@ class LinearRegression:
     def load(cls, filepath):
         with open(filepath, 'rb') as f:
             model = cloudpickle.load(f)
-            model.neptune_logger = neptune_logger = Logger(cfg.env_path, cfg.project_name, model.experiment_name)
+            model.neptune_logger = Logger(cfg.env_path, cfg.project_name, model.experiment_name)
             return model
 

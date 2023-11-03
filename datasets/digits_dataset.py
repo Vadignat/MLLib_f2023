@@ -25,6 +25,9 @@ class Digits(BaseClassificationDataset):
         # preprocessing
         self.get_data_stats()
         getattr(self, cfg.data_preprocess_type.name)()
+        self.targets_train = self.onehotencoding(self.targets_train, self.k)
+        self.targets_valid = self.onehotencoding(self.targets_valid, self.k)
+        self.targets_test = self.onehotencoding(self.targets_test, self.k)
 
     @property
     def inputs(self):
