@@ -16,7 +16,7 @@ class Digits(BaseClassificationDataset):
         # define properties
         self.inputs = digits.data
         self.targets = digits.target
-        self.k = np.max(self.targets) + 1
+        self.k = int(np.max(self.targets) + 1)
         self.d = len(self.inputs[0])
 
         # divide into sets

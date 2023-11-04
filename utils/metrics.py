@@ -43,7 +43,7 @@ def FalseNegatives(predictions: np.ndarray, targets: np.ndarray) -> int:
 
 def accuracy(predictions: np.ndarray, targets: np.ndarray, one_hot_encoding: bool = True) -> float:
     if one_hot_encoding:
-        targets = np.argmax(targets, axis=0)
+        targets = np.argmax(targets, axis=1)
     return np.mean(predictions == targets)
 
 
@@ -67,12 +67,13 @@ def f1_score(predictions: np.ndarray, targets: np.ndarray) -> float:
     return 2 * pr * rc / (pr + rc)
 
 
-def confusion_matrix(predictions: np.ndarray, targets: np.ndarray, one_hot_encoding=True) -> np.ndarray:
-    num_classes = np.max(targets) + 1
+def confusion_matrix(predictions: np.ndarray, targets: np.ndarray, num_classes: int = None, one_hot_encoding=True) -> np.ndarray:
+    if num_classes is None:
+        num_classes = int(np.max(targets) + 1)
     confusion = np.zeros((num_classes, num_classes))
 
     if one_hot_encoding:
-        targets = np.argmax(targets, axis=0)
+        targets = np.argmax(targets, axis=1)
 
     for pred, true in zip(predictions, targets):
         confusion[true, pred] += 1

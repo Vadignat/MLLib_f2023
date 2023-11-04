@@ -4,7 +4,6 @@ import cloudpickle
 import numpy as np
 from easydict import EasyDict
 
-from datasets.base_dataset_classes import BaseClassificationDataset
 from logs.Logger import Logger
 from utils.metrics import accuracy, confusion_matrix
 
@@ -22,8 +21,7 @@ class LogReg:
     def weights_init_xavier_normal(self):
         # TODO init weights with Xavier normal W ~ N(0, sqrt(2 / (D + K)))
         self.W = np.random.normal(0, np.sqrt(2 / (self.d + self.k)), (self.k, self.d))
-        print(self.W.shape)
-        self.b = np.random.normal(0, np.sqrt(2 / (self.d + self.k)), self.k)
+        self.b = np.random.normal(0, np.sqrt(2 / (self.d + self.k)), (self.k, ))
 
     def weights_init_xavier_uniform(self):
         # init weights with Xavier uniform W ~ U(-sqrt(6 / (D + K)), sqrt(6 / (D + K)))
@@ -103,18 +101,29 @@ class LogReg:
 
         TODO implement this function  using matrix multiplication DO NOT USE LOOPS
         """
-        return self.W @ inputs.T + self.b
+        '''
+        if inputs.ndim == 1:
+            return self.W @ inputs + self.b
+
+        z = []
+        for i in range(inputs.shape[0]):
+            z += self.W @ inputs[i] + self.b
+        return z
+        '''
+        if inputs.ndim == 1:
+            return self.W @ inputs + self.b
+
+        z = self.W @ inputs.T + self.b[:, np.newaxis]
+        return z.T
 
     def __get_gradient_w(self, inputs: np.ndarray, targets: np.ndarray, model_confidence: np.ndarray) -> np.ndarray:
         # calculate gradient for w
-        ohe = BaseClassificationDataset.onehotencoding(targets)
-        y = model_confidence - ohe
-        return y @ inputs.T
+        y = model_confidence - targets
+        return np.outer(y, inputs)
 
     def __get_gradient_b(self, targets: np.ndarray, model_confidence: np.ndarray) -> np.ndarray:
         # calculate gradient for b
-        ohe = BaseClassificationDataset.onehotencoding(targets)
-        y = model_confidence - ohe
+        y = model_confidence - targets
         return y
 
     def __weights_update(self, inputs: np.ndarray, targets: np.ndarray, model_confidence: np.ndarray):
@@ -136,32 +145,33 @@ class LogReg:
         :param targets_train: onehot-encoding
         :param epoch: number of loop iteration
         """
-        z = self.get_model_confidence(inputs_train)
-        loss_train = self.__target_function_value(inputs_train, targets_train, z)
-        print(f"Train target function value {epoch}: ", loss_train)
-        train_accuracy, train_matrix = self.__validate(inputs_train, targets_train, z)
-        print(f"Train accuracy {epoch}: ", train_accuracy)
-        print(f" Train confusion matrix {epoch}: ")
-        print(train_matrix)
-        self.neptune_logger.save_param(
-            'train',
-            ['target_function_value', 'accuracy'],
-            [loss_train, train_accuracy]
-        )
-
-        loss_val = self.__target_function_value(inputs_valid, targets_valid)
-        val_accuracy, val_matrix = self.__validate(inputs_valid, targets_valid, z)
-        print(f"Val accuracy {epoch}: ", val_accuracy)
-        print(f"Val confusion matrix {epoch}: ")
-        print(val_matrix)
-        if epoch % 5 == 0:
+        for i in range(inputs_train.shape[0]):
+            z = self.get_model_confidence(inputs_train[i])
+            loss_train = self.__target_function_value(inputs_train, targets_train)
+            print(f"Train target function value {epoch}: ", loss_train)
+            train_accuracy, train_matrix = self.__validate(inputs_train, targets_train)
+            print(f"Train accuracy {epoch}: ", train_accuracy)
+            print(f" Train confusion matrix {epoch}: ")
+            print(train_matrix)
             self.neptune_logger.save_param(
-                'val',
+                'train',
                 ['target_function_value', 'accuracy'],
-                [loss_val, val_accuracy]
+                [loss_train, train_accuracy]
             )
 
-        self.__weights_update(inputs_train, targets_train, z)
+            loss_val = self.__target_function_value(inputs_valid, targets_valid)
+            val_accuracy, val_matrix = self.__validate(inputs_valid, targets_valid)
+            print(f"Val accuracy {epoch}: ", val_accuracy)
+            print(f"Val confusion matrix {epoch}: ")
+            print(val_matrix)
+            if epoch % 5 == 0:
+                self.neptune_logger.save_param(
+                    'val',
+                    ['target_function_value', 'accuracy'],
+                    [loss_val, val_accuracy]
+                )
+
+            self.__weights_update(inputs_train[i], targets_train[i], z)
 
     def gradient_descent_epoch(self, inputs_train: np.ndarray, targets_train: np.ndarray,
                                inputs_valid: Union[np.ndarray, None] = None,
@@ -224,19 +234,21 @@ class LogReg:
         float: The value of the target function.
         TODO implement this function
         """
+
         if z is None:
             z = self.__get_model_output(inputs)
 
-        target_value = np.log(np.sum(np.exp(z), axis=0))
-        return np.sum(targets * (target_value - z))
+        return np.sum(targets * (np.log(np.sum(np.exp(z), axis=1))[:, np.newaxis]) - z)
+
+
 
     def __validate(self, inputs: np.ndarray, targets: np.ndarray, model_confidence: Union[np.ndarray, None] = None):
         #  metrics calculation: accuracy, confusion matrix
         if model_confidence is None:
             model_confidence = self.get_model_confidence(inputs)
-        predictions = np.argmax(model_confidence, axis=0)
+        predictions = np.argmax(model_confidence, axis=1)
         acry = accuracy(predictions, targets)
-        matrix = confusion_matrix(predictions, targets)
+        matrix = confusion_matrix(predictions, targets, num_classes=self.k)
         return acry, matrix
 
     def __call__(self, inputs: np.ndarray):

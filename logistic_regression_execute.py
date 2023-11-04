@@ -20,10 +20,11 @@ model.train(log_reg_dataset.inputs_train,
             )
 
 confidence = model.get_model_confidence(log_reg_dataset.inputs_test)
-preds = np.argmax(confidence, axis=0)
+preds = np.argmax(confidence, axis=1)
 
 test_accuracy = accuracy(preds, log_reg_dataset.targets_test)
-test_matrix = confusion_matrix(preds, log_reg_dataset.targets_test)
+test_matrix = confusion_matrix(preds, log_reg_dataset.targets_test, num_classes=log_reg_dataset.k)
+
 
 print(f"Test accuracy : ", test_accuracy)
 print(f"Test confusion matrix : ")
